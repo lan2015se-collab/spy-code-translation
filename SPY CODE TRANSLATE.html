@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPY CODE TRANSLATION</title>
+<style>
+body {
+  font-family: "新細明體", serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(to bottom, #f0f0f0, #dcdcdc);
+}
+h1 { color: #333; }
+textarea {
+  width: 90%;
+  max-width: 600px;
+  height: 150px;
+  margin: 10px 0;
+  padding: 10px;
+  font-size: 16px;
+  font-family: "新細明體", serif; /* 顧客輸入也使用新細明體 */
+}
+select, button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  margin: 5px;
+}
+#output {
+  width: 90%;
+  max-width: 600px;
+  min-height: 80px;
+  padding: 10px;
+  margin-top: 10px;
+  background: #fff;
+  border: 1px solid #ccc;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  font-family: "新細明體", serif; /* 輸出文字也使用新細明體 */
+}
+footer { margin-top: 20px; color: #666; text-align:center; }
+</style>
+</head>
+<body>
+<h1>SPY CODE TRANSLATION</h1>
+
+<textarea id="inputText" placeholder="輸入中文或英文文字/句子"></textarea>
+
+<select id="mode">
+  <option value="encrypt">英文加密</option>
+  <option value="decrypt">英文解密</option>
+</select>
+
+<button onclick="processText()">繼續</button>
+<button onclick="copyOutput()">一鍵複製</button>
+
+<div id="output"></div>
+
+<footer>MADE BY MT.</footer>
+
+<script>
+// 英文 SPY CODE 對照表
+const encryptTableEng = {
+  a:'b',b:'c',c:'d',d:'e',e:'f',f:'g',g:'h',h:'j',i:'j',
+  j:'k',k:'l',l:'m',m:'n',n:'o',o:'p',p:'q',q:'r',r:'s',
+  s:'t',t:'u',u:'v',v:'w',w:'x',x:'y',y:'z',z:'z1'
+};
+const decryptTableEng = {};
+for(let k in encryptTableEng) decryptTableEng[encryptTableEng[k]] = k;
+
+// 將字串首字母大寫
+function capitalizeFirstLetter(str){
+  if(!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// 將每個單字首字母大寫
+function capitalizeWords(str){
+  return str.replace(/\b\w/g, c => c.toUpperCase());
+}
+
+async function processText() {
+  const input = document.getElementById("inputText").value.trim();
+  if(!input){ alert("請輸入文字！"); return; }
+  let output = "";
+
+  // 判斷是否包含中文
+  const isChinese = /[\u4e00-\u9fff]/.test(input);
+
+  if(isChinese){
+    // 中文 → 英文翻譯 (首字母大寫)
+    try {
+      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(input)}&langpair=zh|en`);
+      const data = await res.json();
+      output = capitalizeFirstLetter(data.responseData.translatedText);
+    } catch(e){
+      output = "翻譯失敗，請稍後再試。";
+    }
+  } else {
+    // 英文 → 根據模式加密/解密
+    const mode = document.getElementById("mode").value;
+    if(mode === "encrypt"){
+      output = input.toLowerCase().split("").map(c => encryptTableEng[c] || c).join("");
+    } else if(mode === "decrypt"){
+      output = input.split("").map(c => decryptTableEng[c] || c).join("");
+      output = capitalizeWords(output); // 解密後每個單字首字母大寫
+    }
+  }
+
+  document.getElementById("output").textContent = output;
+}
+
+function copyOutput(){
+  const text = document.getElementById("output").textContent;
+  if(!text){ alert("沒有文字可以複製！"); return; }
+  navigator.clipboard.writeText(text).then(()=>{
+    alert("已複製到剪貼簿");
+    // 複製後清空輸入框
+    document.getElementById("inputText").value = "";
+  });
+}
+</script>
+</body>
+</html>
